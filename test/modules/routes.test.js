@@ -16,7 +16,6 @@ nconf.set('basedir', __dirname);
 
 // ------------------------------------------------------------------------------------------ Mock Dependencies
 
-var nstatic = require('node-static');
 var youtransfer = require('../../lib/youtransfer');
 
 // ------------------------------------------------------------------------------------------ Test Definition
@@ -28,52 +27,17 @@ describe('YouTransfer Router module', function() {
 	// -------------------------------------------------------------------------------------- Test Initialization
 
 	beforeEach(function() {
-		sandbox = sinon.sandbox.create();
+		sandbox = sinon.createSandbox();
 	});
 
 	afterEach(function() {
 		sandbox.restore();
 	});
 
-	// -------------------------------------------------------------------------------------- Testing constructor
-
-	it('should accept options by Object', function() {
-		var instance = routes({ fileServer: 'My Awesome Fileserver' });
-		instance.fileServer.should.equals('My Awesome Fileserver');
-	});
-
-	it('should accept options by Null Object', function() {
-		var instance = routes(null);
-		should.exist(instance.fileServer);
-		instance.fileServer.serverInfo.should.equals('node-static/0.7.9');
-	});
-
-	it('should accept options by empty Object', function() {
-		var instance = routes({});
-		should.exist(instance.fileServer);
-		instance.fileServer.serverInfo.should.equals('node-static/0.7.9');
-	});
-
-	it('should accept options by String', function() {
-		var instance = routes('./path');
-		should.exist(instance.fileServer);
-		instance.fileServer.serverInfo.should.equals('node-static/0.7.9');
-	});
-
-	it('should throw an error when setting options by Integer', function() {
-		try {
-			var instance = routes(100);
-			should.not.exist(instance);
-		} catch(err) {
-			should.exist(err);
-			err.should.equals('Invalid options provided');
-		}
-	});
-
 	// -------------------------------------------------------------------------------------- Testing upload
 
 	it('should be possible to upload without using dropzone', function(done) {
-		
+
 		var req = {
 				files: {
 					payload: 'file'
@@ -128,7 +92,7 @@ describe('YouTransfer Router module', function() {
 	});
 
 	it('should be possible to upload multiple files without using dropzone', function(done) {
-		
+
 		var req = {
 				files: {
 					payload: [ 'file1', 'file2' ]
@@ -184,7 +148,7 @@ describe('YouTransfer Router module', function() {
 		});
 	});
 	it('should be possible to upload using dropzone', function(done) {
-		
+
 		var req = {
 				files: {
 					'dz-payload': 'file'
@@ -242,7 +206,7 @@ describe('YouTransfer Router module', function() {
 	});
 
 	it('should provide feedback if errors occur while uploading', function(done) {
-		
+
 		var req = {
 				files: {
 					payload: 'file'
@@ -291,10 +255,10 @@ describe('YouTransfer Router module', function() {
 			err[0].message.should.equals("An error occurred while uploading your file(s).");
 			done();
 		});
-	});	
+	});
 
 	it('should provide feedback if multiple errors occur while uploading', function(done) {
-		
+
 		var req = {
 				files: {
 					payload: [ 'file1', 'file2' ]
@@ -343,7 +307,7 @@ describe('YouTransfer Router module', function() {
 			err[0].message.should.equals("An error occurred while uploading your file(s).");
 			done();
 		});
-	});	
+	});
 
 	// -------------------------------------------------------------------------------------- Testing uploadBundle
 
@@ -781,7 +745,7 @@ describe('YouTransfer Router module', function() {
 			err[0].message.should.equals("The settings are currently locked. Please unlock them if you wish to make changes.");
 			done();
 		})
-	});	
+	});
 
 	it('should provide feedback if an error occures while trying to read template source', function(done) {
 
@@ -814,7 +778,7 @@ describe('YouTransfer Router module', function() {
 			err[0].message.should.equals("An error occurred while trying to retrieve the template");
 			done();
 		})
-	});	
+	});
 
 	it('should provide feedback if template does not exist', function(done) {
 
@@ -843,7 +807,7 @@ describe('YouTransfer Router module', function() {
 			err[0].message.should.equals("An invalid template has been selected. Please try again.");
 			done();
 		})
-	});	
+	});
 
 	// -------------------------------------------------------------------------------------- Testing settingsSaveTemplate
 
@@ -1041,7 +1005,7 @@ describe('YouTransfer Router module', function() {
 			resMock.verify();
 			done();
 		});
-	});	
+	});
 
 	it('should be possible to retrieve dropzone settings', function(done) {
 
@@ -1078,7 +1042,7 @@ describe('YouTransfer Router module', function() {
 			resMock.verify();
 			done();
 		});
-	});	
+	});
 
 	it('should be possible to retrieve dropzone settings even if there is no default setting present', function(done) {
 
@@ -1115,7 +1079,7 @@ describe('YouTransfer Router module', function() {
 			resMock.verify();
 			done();
 		});
-	});	
+	});
 
 	it('should not be possible to retrieve settings pages if settings have been finalised', function(done) {
 
@@ -1149,7 +1113,7 @@ describe('YouTransfer Router module', function() {
 			resMock.verify();
 			done();
 		});
-	});	
+	});
 
 	// -------------------------------------------------------------------------------------- Testing settingsSaveByName
 
@@ -1263,28 +1227,6 @@ describe('YouTransfer Router module', function() {
 			err[0].message.should.equals("The settings are currently locked. Please unlock them prior to making changes.");
 			done();
 		})
-	});	
-
-	// -------------------------------------------------------------------------------------- Testing settingsSaveByName
-
-	it('should be possible to serve static files', function() {
-
-		var res = {},
-			req = {
-				params: new Array('some', 'static', 'file')
-			},
-			server = {
-				serveFile: function() {}
-			},
-			instance = new routes({
-				fileServer: server
-			});
-
-		var serverMock = sandbox.mock(server);
-		serverMock.expects('serveFile').once().withArgs('/' + req.params[1] + '/' + req.params[2], 200, { server: 'youtransfer.io', 'Cache-Control': 'max-age=' + nconf.get('CACHE_MAX_AGE') }, req, res);
-
-		instance.staticFiles()(req, res);
-		serverMock.verify();
 	});
 
 	// -------------------------------------------------------------------------------------- Testing signout
@@ -1307,7 +1249,7 @@ describe('YouTransfer Router module', function() {
 		router.signout()(req, res);
 		reqMock.verify();
 		resMock.verify();
-		
+
 	});
 
 	// -------------------------------------------------------------------------------------- Testing default routes
@@ -1354,8 +1296,8 @@ describe('YouTransfer Router module', function() {
 		router.default()(req, res, function() {
 			req.errors.exist().should.equals(false);
 			resMock.verify();
-			done();			
+			done();
 		});
-	});	
+	});
 
 });

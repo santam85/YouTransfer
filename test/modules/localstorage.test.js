@@ -24,10 +24,10 @@ describe('YouTransfer Local Storage module', function() {
 	// -------------------------------------------------------------------------------------- Test Initialization
 
 	beforeEach(function() {
-		sandbox = sinon.sandbox.create();
-		provider = localstorage({ 
+		sandbox = sinon.createSandbox();
+		provider = localstorage({
 			storage: {
-				localstoragepath: __dirname 
+				localstoragepath: __dirname
 			},
 			security: {
 				encryptionEnabled: false
@@ -43,9 +43,9 @@ describe('YouTransfer Local Storage module', function() {
 	// -------------------------------------------------------------------------------------- Testing constructor
 
 	it('should accept options by Object', function() {
-		var instance = localstorage({ 
+		var instance = localstorage({
 			storage: {
-				localstoragepath: __dirname 
+				localstoragepath: __dirname
 			}
 		});
 
@@ -179,12 +179,12 @@ describe('YouTransfer Local Storage module', function() {
 
 	it('should implement the "upload" method and enable local storage of an encrypted file', function(done) {
 		provider = localstorage({
-			storage: { 
+			storage: {
 				localstoragepath: __dirname
 			},
 			security: {
 				encryptionEnabled: true,
-				encryptionKey: 'MySecretEncryptionKey'
+				encryptionKey: '5ebe2294ecd0e0f08eab7690d2a6ee69'
 			}
 		});
 
@@ -223,7 +223,7 @@ describe('YouTransfer Local Storage module', function() {
 		});
 
 		var cryptoMock = sandbox.mock(crypto);
-		cryptoMock.expects('createCipher').once().returns(stream);
+		cryptoMock.expects('createCipheriv').once().returns(stream);
 
 		var streamMock = sandbox.mock(stream);
 		streamMock.expects('pipe').twice().returns(stream);
@@ -414,18 +414,19 @@ describe('YouTransfer Local Storage module', function() {
 	});
 
 	it('should be possible to download an archive with encrypted files', function(done) {
-		provider = localstorage({ 
+		provider = localstorage({
 			storage: {
 				localstoragepath: __dirname
 			},
 			security: {
 				encryptionEnabled: true,
-				encryptionKey: 'MySecretEncryptionKey'
+				encryptionKey: '5ebe2294ecd0e0f08eab7690d2a6ee69'
 			}
 		});
 
 		var data = "my binary data";
-		var cipher = crypto.createCipher('aes-256-ctr', 'MySecretEncryptionKey');
+    var iv = Buffer.from('26ae5cc854e36b6bdfca366848dea6bb', 'hex');
+    var cipher = crypto.createCipheriv('aes-256-ctr', '5ebe2294ecd0e0f08eab7690d2a6ee69', iv);
 		var buffer = Buffer.concat([cipher.update(data) , cipher.final()]);
 
 		var token = 'bundle',
@@ -466,7 +467,7 @@ describe('YouTransfer Local Storage module', function() {
 		zipMock.expects('pipe').once();
 		zipMock.expects('finalize').once();
 		zipMock.expects('on').once().withArgs('finish').callsArgAsync(1);
-		zipMock.expects('append').once().withArgs(new Buffer(data), { name: bundle.files[0].name });
+		zipMock.expects('append').once().withArgs(Buffer.from(data), { name: bundle.files[0].name });
 		sandbox.stub(archiver, 'create').returns(zip);
 
 		var resMock = sandbox.mock(res);
@@ -537,7 +538,7 @@ describe('YouTransfer Local Storage module', function() {
 			done();
 		});
 
-	});	
+	});
 
 	it('should continue with erronous callback if archive token path traversal detection throws error', function(done) {
 
@@ -601,7 +602,7 @@ describe('YouTransfer Local Storage module', function() {
 			done();
 		});
 
-	});	
+	});
 
 	it('should continue with erronous callback if archive bundle has expired', function(done) {
 
@@ -628,7 +629,7 @@ describe('YouTransfer Local Storage module', function() {
 			done();
 		});
 
-	});	
+	});
 
 	it('should continue with erronous callback if archive file path traversal detection throws error', function(done) {
 
@@ -650,10 +651,12 @@ describe('YouTransfer Local Storage module', function() {
 		});
 
 		var zip = {
-			on: function() {},
+			on: function() {
+        console.log('on');
+      },
 		};
 		var zipMock = sandbox.mock(zip);
-		zipMock.expects('on').once().withArgs('finish').callsArgAsync(1);
+		zipMock.expects('on').once().withArgs('finish');
 		sandbox.stub(archiver, 'create').returns(zip);
 
 		var res = {
@@ -670,7 +673,7 @@ describe('YouTransfer Local Storage module', function() {
 			done();
 		});
 
-	});	
+	});
 
 	// -------------------------------------------------------------------------------------- Testing file download
 
@@ -750,7 +753,7 @@ describe('YouTransfer Local Storage module', function() {
 
 		sandbox.stub(mime, 'getType').returns(context.type);
 
-		sandbox.stub(crypto, "createDecipher").returns(stream);
+		sandbox.stub(crypto, "createDecipheriv").returns(stream);
 
 		sandbox.stub(fs, 'createReadStream').returns(stream);
 
@@ -900,7 +903,7 @@ describe('YouTransfer Local Storage module', function() {
 			err.message.should.equals('The requested file is no longer available.');
 			done();
 		});
-	});	
+	});
 
 	it('should continue with erronous callback if download token path traversal detection throws error', function(done) {
 
